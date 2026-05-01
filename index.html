@@ -35,20 +35,23 @@
       letter-spacing: 1px;
       color: #666;
       margin-bottom: 10px;
+      text-align: center;
     }
 
     .article-title {
-      font-size: 1.15rem;
+      font-size: 1.55rem;
       font-weight: 700;
       color: #ffffff;
-      line-height: 1.45;
-      margin-bottom: 12px;
+      line-height: 1.4;
+      margin-bottom: 14px;
+      text-align: center;
     }
 
     .article-body {
       font-size: 0.93rem;
       line-height: 1.75;
       color: #c8c8c8;
+      text-align: center;
     }
 
     .social-row {
@@ -163,6 +166,8 @@
       border-color: #6b8cff;
       color: #fff;
       font-weight: 600;
+      padding: 14px 40px;
+      font-size: 1rem;
     }
     button.primary:hover { background: #859bff; border-color: #859bff; }
     button.primary:disabled {
@@ -172,26 +177,10 @@
       cursor: not-allowed;
     }
 
-    /* ── Response card ── */
-    .response-card {
-      display: none;
-    }
-    .response-card.visible { display: block; }
-
-    .response-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #666;
-      margin-bottom: 14px;
-    }
-
-    .response-text {
-      font-size: 0.93rem;
-      line-height: 1.75;
-      color: #c8c8c8;
-      white-space: pre-wrap;
-      word-break: break-word;
+    /* ── Show original row ── */
+    .show-original-row {
+      text-align: center;
+      margin-bottom: 16px;
     }
 
     .cursor {
@@ -226,6 +215,11 @@
         <span>shares</span>
       </div>
     </div>
+  </div>
+
+  <!-- Show Original -->
+  <div class="show-original-row">
+    <button onclick="showOriginal()">◎ Show Original</button>
   </div>
 
   <!-- Sliders -->
@@ -271,15 +265,9 @@
   <!-- Action Buttons -->
   <div class="buttons-row">
     <button onclick="resetAll()">↺ Reset</button>
+    <button onclick="prevArticle()">← Prev</button>
     <button onclick="nextArticle()">→ Next</button>
     <button class="primary" id="rewriteBtn" onclick="rewriteArticle()">✦ Rewrite</button>
-    <button onclick="showOriginal()">◎ Show Original</button>
-  </div>
-
-  <!-- Response Area -->
-  <div class="card response-card" id="responseCard">
-    <div class="response-label">Rewritten Version</div>
-    <div class="response-text" id="responseText"></div>
   </div>
 
 </div>
@@ -423,27 +411,27 @@ const articles = [
 let currentIndex = 0;
 let isStreaming = false;
 let articleStats = articles.map(() => ({ likes: 0, shares: 0, shown: false }));
+let articleStates = articles.map(() => ({ displayText: null }));
 
 function loadArticle(index) {
   currentIndex = index;
   const art = articles[index];
   const stats = articleStats[index];
+  const state = articleStates[index];
 
   document.getElementById('articleMeta').textContent = `Article ${index + 1} / ${articles.length}`;
   document.getElementById('articleTitle').textContent = art.title;
-  document.getElementById('articleBody').textContent = art.text;
+  document.getElementById('articleBody').textContent = state.displayText ?? art.text;
   document.getElementById('likesCount').textContent = stats.likes.toLocaleString();
   document.getElementById('sharesCount').textContent = stats.shares.toLocaleString();
 
   const socialRow = document.getElementById('socialRow');
   stats.shown ? socialRow.classList.add('visible') : socialRow.classList.remove('visible');
-
-  document.getElementById('responseCard').classList.remove('visible');
-  document.getElementById('responseText').textContent = '';
 }
 
 function resetAll() {
   articleStats = articles.map(() => ({ likes: 0, shares: 0, shown: false }));
+  articleStates = articles.map(() => ({ displayText: null }));
   ['openness','conscientiousness','extraversion','agreeableness','neuroticism'].forEach(id => {
     document.getElementById(id).value = 3;
     document.getElementById(id + 'Val').textContent = '3';
@@ -451,14 +439,17 @@ function resetAll() {
   loadArticle(0);
 }
 
+function prevArticle() {
+  loadArticle((currentIndex - 1 + articles.length) % articles.length);
+}
+
 function nextArticle() {
   loadArticle((currentIndex + 1) % articles.length);
 }
 
 function showOriginal() {
-  document.getElementById('responseCard').classList.remove('visible');
-  document.getElementById('responseText').textContent = '';
-  document.getElementById('articleCard').scrollIntoView({ behavior: 'smooth' });
+  articleStates[currentIndex].displayText = null;
+  document.getElementById('articleBody').textContent = articles[currentIndex].text;
 }
 
 async function rewriteArticle() {
@@ -469,24 +460,25 @@ async function rewriteArticle() {
   btn.disabled = true;
   btn.textContent = '⟳ Rewriting…';
 
-  const responseCard = document.getElementById('responseCard');
-  const responseText = document.getElementById('responseText');
-  responseCard.classList.add('visible');
-  responseText.textContent = '';
+  const articleBody = document.getElementById('articleBody');
+  articleBody.textContent = '';
 
   const cursor = document.createElement('span');
   cursor.className = 'cursor';
-  responseText.appendChild(cursor);
+  articleBody.appendChild(cursor);
 
   const art = articles[currentIndex];
+  const currentText = articleStates[currentIndex].displayText ?? art.text;
   const payload = {
-    text: art.title + '\n\n' + art.text,
+    text: art.title + '\n\n' + currentText,
     openness: parseInt(document.getElementById('openness').value),
     conscientiousness: parseInt(document.getElementById('conscientiousness').value),
     extraversion: parseInt(document.getElementById('extraversion').value),
     agreeableness: parseInt(document.getElementById('agreeableness').value),
     neuroticism: parseInt(document.getElementById('neuroticism').value)
   };
+
+  let accumulatedText = '';
 
   try {
     const response = await fetch('/api/rewrite', {
@@ -497,7 +489,7 @@ async function rewriteArticle() {
 
     if (!response.ok) {
       cursor.remove();
-      responseText.textContent = 'Error: ' + (await response.text());
+      articleBody.textContent = 'Error: ' + (await response.text());
       return;
     }
 
@@ -521,7 +513,8 @@ async function rewriteArticle() {
             const data = JSON.parse(trimmed.slice(6));
             const content = data.choices?.[0]?.delta?.content;
             if (content) {
-              responseText.insertBefore(document.createTextNode(content), cursor);
+              accumulatedText += content;
+              articleBody.insertBefore(document.createTextNode(content), cursor);
             }
           } catch (_) { /* partial chunk, skip */ }
         }
@@ -529,6 +522,9 @@ async function rewriteArticle() {
     }
 
     cursor.remove();
+
+    // Save rewritten text for recursive rewriting
+    articleStates[currentIndex].displayText = accumulatedText;
 
     // Accumulate random likes + shares
     const stats = articleStats[currentIndex];
@@ -542,7 +538,7 @@ async function rewriteArticle() {
 
   } catch (err) {
     cursor.remove();
-    responseText.textContent = 'Error: ' + err.message;
+    articleBody.textContent = articleStates[currentIndex].displayText ?? art.text;
   } finally {
     isStreaming = false;
     btn.disabled = false;
