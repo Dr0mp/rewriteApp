@@ -710,7 +710,7 @@ function overlayClick(e) { if (e.target === e.currentTarget) closeHelp(); }
 // Boot
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHelp(); });
 loadArticle(0);
-openHelp();
+document.addEventListener('DOMContentLoaded', openHelp);
 
 // ── Plexus background ──
 (function () {
