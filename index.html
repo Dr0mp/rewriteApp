@@ -219,7 +219,7 @@
 
   <!-- Show Original -->
   <div class="show-original-row">
-    <button onclick="showOriginal()">◎ Show Original</button>
+    <button id="toggleOriginalBtn" onclick="toggleOriginal()" style="display:none">◎ Show Original</button>
   </div>
 
   <!-- Sliders -->
@@ -411,7 +411,7 @@ const articles = [
 let currentIndex = 0;
 let isStreaming = false;
 let articleStats = articles.map(() => ({ likes: 0, shares: 0, shown: false }));
-let articleStates = articles.map(() => ({ displayText: null }));
+let articleStates = articles.map(() => ({ displayText: null, showingOriginal: false }));
 
 function loadArticle(index) {
   currentIndex = index;
@@ -421,17 +421,20 @@ function loadArticle(index) {
 
   document.getElementById('articleMeta').textContent = `Article ${index + 1} / ${articles.length}`;
   document.getElementById('articleTitle').textContent = art.title;
-  document.getElementById('articleBody').textContent = state.displayText ?? art.text;
+  document.getElementById('articleBody').textContent =
+    state.showingOriginal ? art.text : (state.displayText ?? art.text);
   document.getElementById('likesCount').textContent = stats.likes.toLocaleString();
   document.getElementById('sharesCount').textContent = stats.shares.toLocaleString();
 
   const socialRow = document.getElementById('socialRow');
   stats.shown ? socialRow.classList.add('visible') : socialRow.classList.remove('visible');
+
+  updateToggleBtn();
 }
 
 function resetAll() {
   articleStats = articles.map(() => ({ likes: 0, shares: 0, shown: false }));
-  articleStates = articles.map(() => ({ displayText: null }));
+  articleStates = articles.map(() => ({ displayText: null, showingOriginal: false }));
   ['openness','conscientiousness','extraversion','agreeableness','neuroticism'].forEach(id => {
     document.getElementById(id).value = 3;
     document.getElementById(id + 'Val').textContent = '3';
@@ -447,9 +450,25 @@ function nextArticle() {
   loadArticle((currentIndex + 1) % articles.length);
 }
 
-function showOriginal() {
-  articleStates[currentIndex].displayText = null;
-  document.getElementById('articleBody').textContent = articles[currentIndex].text;
+function updateToggleBtn() {
+  const btn = document.getElementById('toggleOriginalBtn');
+  const state = articleStates[currentIndex];
+  if (!state.displayText) {
+    btn.style.display = 'none';
+    return;
+  }
+  btn.style.display = '';
+  btn.textContent = state.showingOriginal ? '◑ Show Rewritten' : '◎ Show Original';
+}
+
+function toggleOriginal() {
+  const state = articleStates[currentIndex];
+  if (!state.displayText) return;
+  state.showingOriginal = !state.showingOriginal;
+  document.getElementById('articleBody').textContent = state.showingOriginal
+    ? articles[currentIndex].text
+    : state.displayText;
+  updateToggleBtn();
 }
 
 async function rewriteArticle() {
@@ -525,6 +544,8 @@ async function rewriteArticle() {
 
     // Save rewritten text for recursive rewriting
     articleStates[currentIndex].displayText = accumulatedText;
+    articleStates[currentIndex].showingOriginal = false;
+    updateToggleBtn();
 
     // Accumulate random likes + shares
     const stats = articleStats[currentIndex];
