@@ -217,6 +217,13 @@
     </div>
   </div>
 
+  <!-- Nav / Reset row (under article) -->
+  <div class="buttons-row">
+    <button onclick="resetAll()">↺ Reset</button>
+    <button onclick="prevArticle()">← Prev</button>
+    <button onclick="nextArticle()">→ Next</button>
+  </div>
+
   <!-- Show Original -->
   <div class="show-original-row">
     <button id="toggleOriginalBtn" onclick="toggleOriginal()" style="display:none">◎ Show Original</button>
@@ -262,11 +269,8 @@
     </div>
   </div>
 
-  <!-- Action Buttons -->
+  <!-- Rewrite Buttons -->
   <div class="buttons-row">
-    <button onclick="resetAll()">↺ Reset</button>
-    <button onclick="prevArticle()">← Prev</button>
-    <button onclick="nextArticle()">→ Next</button>
     <button class="primary" id="rewriteBtn" onclick="rewriteArticle()">✦ Rewrite</button>
     <button class="primary" id="rewrite5Btn" onclick="rewriteTimes(5)">✦✦ Rewrite ×5</button>
   </div>
