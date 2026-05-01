@@ -268,6 +268,7 @@
     <button onclick="prevArticle()">← Prev</button>
     <button onclick="nextArticle()">→ Next</button>
     <button class="primary" id="rewriteBtn" onclick="rewriteArticle()">✦ Rewrite</button>
+    <button class="primary" id="rewrite5Btn" onclick="rewriteTimes(5)">✦✦ Rewrite ×5</button>
   </div>
 
 </div>
@@ -471,12 +472,26 @@ function toggleOriginal() {
   updateToggleBtn();
 }
 
+async function rewriteTimes(n) {
+  const btn5 = document.getElementById('rewrite5Btn');
+  btn5.disabled = true;
+  for (let i = 0; i < n; i++) {
+    btn5.textContent = `✦✦ Rewriting… ${i + 1}/${n}`;
+    await rewriteArticle();
+    if (!articleStates[currentIndex].displayText) break; // bail on error
+  }
+  btn5.disabled = false;
+  btn5.textContent = '✦✦ Rewrite ×5';
+}
+
 async function rewriteArticle() {
   if (isStreaming) return;
   isStreaming = true;
 
   const btn = document.getElementById('rewriteBtn');
+  const btn5 = document.getElementById('rewrite5Btn');
   btn.disabled = true;
+  btn5.disabled = true;
   btn.textContent = '⟳ Rewriting…';
 
   const articleBody = document.getElementById('articleBody');
@@ -563,6 +578,7 @@ async function rewriteArticle() {
   } finally {
     isStreaming = false;
     btn.disabled = false;
+    btn5.disabled = false;
     btn.textContent = '✦ Rewrite';
   }
 }
