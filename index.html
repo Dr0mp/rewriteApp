@@ -15,9 +15,18 @@
       padding: 40px 20px 80px;
     }
 
+    #plexus {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
     .container {
       max-width: 760px;
       margin: 0 auto;
+      position: relative;
+      z-index: 1;
     }
 
     /* ── Article card ── */
@@ -298,6 +307,7 @@
   </style>
 </head>
 <body>
+<canvas id="plexus"></canvas>
 <div class="container">
 
   <!-- Article Display -->
@@ -697,6 +707,94 @@ function overlayClick(e) { if (e.target === e.currentTarget) closeHelp(); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHelp(); });
 loadArticle(0);
 openHelp();
+
+// ── Plexus background ──
+(function () {
+  const canvas = document.getElementById('plexus');
+  const ctx = canvas.getContext('2d');
+  const PARTICLE_COUNT = 70;
+  const MAX_DIST = 160;
+  const MOUSE_RADIUS = 200;
+  const DOT_COLOR = '107, 140, 255';
+
+  let W, H, mouse = { x: -9999, y: -9999 };
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  window.addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; });
+
+  const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    vx: (Math.random() - 0.5) * 0.4,
+    vy: (Math.random() - 0.5) * 0.4
+  }));
+
+  function dist(a, b) {
+    const dx = a.x - b.x, dy = a.y - b.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // move particles
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0 || p.x > W) p.vx *= -1;
+      if (p.y < 0 || p.y > H) p.vy *= -1;
+    }
+
+    // draw lines between nearby particles
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const d = dist(particles[i], particles[j]);
+        if (d < MAX_DIST) {
+          const alpha = (1 - d / MAX_DIST) * 0.18;
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(${DOT_COLOR},${alpha})`;
+          ctx.lineWidth = 0.8;
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // draw lines from particles to mouse
+    for (const p of particles) {
+      const d = dist(p, mouse);
+      if (d < MOUSE_RADIUS) {
+        const alpha = (1 - d / MOUSE_RADIUS) * 0.45;
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(${DOT_COLOR},${alpha})`;
+        ctx.lineWidth = 0.9;
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(mouse.x, mouse.y);
+        ctx.stroke();
+      }
+    }
+
+    // draw dots
+    for (const p of particles) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${DOT_COLOR},0.35)`;
+      ctx.fill();
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+})();
 </script>
 <!-- Help icon -->
 <button class="help-btn" onclick="openHelp()" title="How to use">?</button>
