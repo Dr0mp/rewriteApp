@@ -145,6 +145,7 @@
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
+      justify-content: center;
       margin-bottom: 16px;
     }
 
@@ -193,6 +194,107 @@
       margin-left: 1px;
     }
     @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+
+    /* ── Help icon ── */
+    .help-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      color: #6b8cff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      transition: background 0.15s, border-color 0.15s;
+      padding: 0;
+    }
+    .help-btn:hover { background: #333; border-color: #6b8cff; }
+
+    /* ── Modal overlay ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 20px;
+    }
+    .modal-overlay.hidden { display: none; }
+
+    .modal {
+      background: #242424;
+      border: 1px solid #3a3a3a;
+      border-radius: 16px;
+      padding: 36px 36px 28px;
+      max-width: 480px;
+      width: 100%;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      line-height: 1;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .modal-close:hover { color: #fff; background: #333; }
+
+    .modal h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 20px;
+      padding-right: 24px;
+    }
+
+    .modal ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal li {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #bbb;
+      padding-left: 20px;
+      position: relative;
+    }
+    .modal li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: #6b8cff;
+      font-weight: 700;
+    }
+
+    .modal-footer {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #333;
+      font-size: 0.78rem;
+      color: #555;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -587,8 +689,31 @@ async function rewriteArticle() {
   }
 }
 
+function openHelp()  { document.getElementById('helpOverlay').classList.remove('hidden'); }
+function closeHelp() { document.getElementById('helpOverlay').classList.add('hidden'); }
+function overlayClick(e) { if (e.target === e.currentTarget) closeHelp(); }
+
 // Boot
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHelp(); });
 loadArticle(0);
+openHelp();
 </script>
+<!-- Help icon -->
+<button class="help-btn" onclick="openHelp()" title="How to use">?</button>
+
+<!-- Help modal -->
+<div class="modal-overlay hidden" id="helpOverlay" onclick="overlayClick(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeHelp()">✕</button>
+    <h2>How to use</h2>
+    <ul>
+      <li>Use the sliders to set the personality of the rewritten article.</li>
+      <li>Press <strong>Rewrite</strong> to rewrite once, or <strong>Rewrite ×5</strong> to rewrite recursively 5 times and observe the effects of personality amplification.</li>
+      <li>Use <strong>Show Original</strong> to toggle between the original and the rewritten version and check the differences.</li>
+    </ul>
+    <div class="modal-footer">Model used for rewriting: Gemma 3 — 4B</div>
+  </div>
+</div>
+
 </body>
 </html>
