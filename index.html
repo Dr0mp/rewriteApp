@@ -109,6 +109,14 @@
     }
     .slider-row:last-child { margin-bottom: 0; }
 
+    .slider-track {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      min-width: 0;
+    }
+
     .slider-name {
       width: 158px;
       font-size: 0.87rem;
@@ -151,6 +159,38 @@
       font-weight: 700;
       color: #6b8cff;
       flex-shrink: 0;
+    }
+
+    @media (max-width: 520px) {
+      .card { padding: 20px 16px; }
+
+      .slider-row {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .slider-name {
+        width: auto;
+        text-align: center;
+      }
+
+      .slider-track {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+      }
+
+      input[type="range"] {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .slider-val {
+        width: 24px;
+        text-align: center;
+      }
     }
 
     /* ── Buttons ── */
@@ -351,37 +391,47 @@
 
     <div class="slider-row">
       <div class="slider-name">Openness</div>
-      <input type="range" id="openness" min="1" max="5" value="3"
-             oninput="document.getElementById('opennessVal').textContent=this.value">
-      <div class="slider-val" id="opennessVal">3</div>
+      <div class="slider-track">
+        <input type="range" id="openness" min="1" max="5" value="3"
+               oninput="document.getElementById('opennessVal').textContent=this.value">
+        <div class="slider-val" id="opennessVal">3</div>
+      </div>
     </div>
 
     <div class="slider-row">
       <div class="slider-name">Conscientiousness</div>
-      <input type="range" id="conscientiousness" min="1" max="5" value="3"
-             oninput="document.getElementById('conscientiousnessVal').textContent=this.value">
-      <div class="slider-val" id="conscientiousnessVal">3</div>
+      <div class="slider-track">
+        <input type="range" id="conscientiousness" min="1" max="5" value="3"
+               oninput="document.getElementById('conscientiousnessVal').textContent=this.value">
+        <div class="slider-val" id="conscientiousnessVal">3</div>
+      </div>
     </div>
 
     <div class="slider-row">
       <div class="slider-name">Extraversion</div>
-      <input type="range" id="extraversion" min="1" max="5" value="3"
-             oninput="document.getElementById('extraversionVal').textContent=this.value">
-      <div class="slider-val" id="extraversionVal">3</div>
+      <div class="slider-track">
+        <input type="range" id="extraversion" min="1" max="5" value="3"
+               oninput="document.getElementById('extraversionVal').textContent=this.value">
+        <div class="slider-val" id="extraversionVal">3</div>
+      </div>
     </div>
 
     <div class="slider-row">
       <div class="slider-name">Agreeableness</div>
-      <input type="range" id="agreeableness" min="1" max="5" value="3"
-             oninput="document.getElementById('agreeablenessVal').textContent=this.value">
-      <div class="slider-val" id="agreeablenessVal">3</div>
+      <div class="slider-track">
+        <input type="range" id="agreeableness" min="1" max="5" value="3"
+               oninput="document.getElementById('agreeablenessVal').textContent=this.value">
+        <div class="slider-val" id="agreeablenessVal">3</div>
+      </div>
     </div>
 
     <div class="slider-row">
       <div class="slider-name">Neuroticism</div>
-      <input type="range" id="neuroticism" min="1" max="5" value="3"
-             oninput="document.getElementById('neuroticismVal').textContent=this.value">
-      <div class="slider-val" id="neuroticismVal">3</div>
+      <div class="slider-track">
+        <input type="range" id="neuroticism" min="1" max="5" value="3"
+               oninput="document.getElementById('neuroticismVal').textContent=this.value">
+        <div class="slider-val" id="neuroticismVal">3</div>
+      </div>
     </div>
   </div>
 
