@@ -40,7 +40,7 @@ Rewrite the following text adapting it according to the specified Big Five perso
 ${text}
 
 ### Requirement:
-Rewrite the text in maximum 2 sentences. Respond directly and exclusively with the rewritten text, without additional explanations.`;
+Rewrite the text in maximum 3 sentences. Respond directly and exclusively with the rewritten text, without additional explanations.`;
 
   const openRouterRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
@@ -55,7 +55,7 @@ Rewrite the text in maximum 2 sentences. Respond directly and exclusively with t
       messages: [
         {
           role: 'system',
-          content: 'You are an editorial assistant who rewrites texts strictly according to the Big Five personality trait instructions provided. Respond only with the rewritten text — no explanations, no preamble.'
+          content: 'You are an editorial assistant who rewrites texts strictly according to the Big Five personality trait instructions provided. Respond only with the rewritten text — no explanations, no preamble. Slightly propagandistic.'
         },
         {
           role: 'user',
