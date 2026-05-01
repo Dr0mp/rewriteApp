@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Big Five Article Rewriter</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #181818;
+      color: #e8e8e8;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    /* ── Article card ── */
+    .card {
+      background: #242424;
+      border: 1px solid #333;
+      border-radius: 14px;
+      padding: 28px 32px;
+      margin-bottom: 16px;
+    }
+
+    .article-meta {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .article-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.45;
+      margin-bottom: 12px;
+    }
+
+    .article-body {
+      font-size: 0.93rem;
+      line-height: 1.75;
+      color: #c8c8c8;
+    }
+
+    .social-row {
+      display: flex;
+      gap: 24px;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid #333;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s;
+    }
+    .social-row.visible { opacity: 1; pointer-events: all; }
+
+    .social-stat {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.88rem;
+      color: #888;
+    }
+    .social-stat .count {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #e8e8e8;
+    }
+
+    /* ── Sliders card ── */
+    .section-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .slider-row:last-child { margin-bottom: 0; }
+
+    .slider-name {
+      width: 158px;
+      font-size: 0.87rem;
+      color: #c0c0c0;
+      flex-shrink: 0;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #3a3a3a;
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: #6b8cff;
+      border: 2px solid #181818;
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: #6b8cff;
+      border: 2px solid #181818;
+      cursor: pointer;
+    }
+
+    .slider-val {
+      width: 28px;
+      text-align: right;
+      font-size: 0.87rem;
+      font-weight: 700;
+      color: #6b8cff;
+      flex-shrink: 0;
+    }
+
+    /* ── Buttons ── */
+    .buttons-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    button {
+      padding: 10px 20px;
+      border-radius: 9px;
+      border: 1px solid #3a3a3a;
+      background: #242424;
+      color: #d8d8d8;
+      font-size: 0.875rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    button:hover { background: #2f2f2f; border-color: #4a4a4a; color: #fff; }
+
+    button.primary {
+      background: #6b8cff;
+      border-color: #6b8cff;
+      color: #fff;
+      font-weight: 600;
+    }
+    button.primary:hover { background: #859bff; border-color: #859bff; }
+    button.primary:disabled {
+      background: #333;
+      border-color: #333;
+      color: #666;
+      cursor: not-allowed;
+    }
+
+    /* ── Response card ── */
+    .response-card {
+      display: none;
+    }
+    .response-card.visible { display: block; }
+
+    .response-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-bottom: 14px;
+    }
+
+    .response-text {
+      font-size: 0.93rem;
+      line-height: 1.75;
+      color: #c8c8c8;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: #6b8cff;
+      animation: blink 0.9s infinite;
+      vertical-align: text-bottom;
+      margin-left: 1px;
+    }
+    @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Article Display -->
+  <div class="card" id="articleCard">
+    <div class="article-meta" id="articleMeta">Article 1 / 33</div>
+    <div class="article-title" id="articleTitle"></div>
+    <div class="article-body" id="articleBody"></div>
+    <div class="social-row" id="socialRow">
+      <div class="social-stat">
+        <span>❤️</span>
+        <span class="count" id="likesCount">0</span>
+        <span>likes</span>
+      </div>
+      <div class="social-stat">
+        <span>🔗</span>
+        <span class="count" id="sharesCount">0</span>
+        <span>shares</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sliders -->
+  <div class="card">
+    <div class="section-label">Big Five Personality Traits</div>
+
+    <div class="slider-row">
+      <div class="slider-name">Openness</div>
+      <input type="range" id="openness" min="1" max="5" value="3"
+             oninput="document.getElementById('opennessVal').textContent=this.value">
+      <div class="slider-val" id="opennessVal">3</div>
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-name">Conscientiousness</div>
+      <input type="range" id="conscientiousness" min="1" max="5" value="3"
+             oninput="document.getElementById('conscientiousnessVal').textContent=this.value">
+      <div class="slider-val" id="conscientiousnessVal">3</div>
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-name">Extraversion</div>
+      <input type="range" id="extraversion" min="1" max="5" value="3"
+             oninput="document.getElementById('extraversionVal').textContent=this.value">
+      <div class="slider-val" id="extraversionVal">3</div>
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-name">Agreeableness</div>
+      <input type="range" id="agreeableness" min="1" max="5" value="3"
+             oninput="document.getElementById('agreeablenessVal').textContent=this.value">
+      <div class="slider-val" id="agreeablenessVal">3</div>
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-name">Neuroticism</div>
+      <input type="range" id="neuroticism" min="1" max="5" value="3"
+             oninput="document.getElementById('neuroticismVal').textContent=this.value">
+      <div class="slider-val" id="neuroticismVal">3</div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="buttons-row">
+    <button onclick="resetAll()">↺ Reset</button>
+    <button onclick="nextArticle()">→ Next</button>
+    <button class="primary" id="rewriteBtn" onclick="rewriteArticle()">✦ Rewrite</button>
+    <button onclick="showOriginal()">◎ Show Original</button>
+  </div>
+
+  <!-- Response Area -->
+  <div class="card response-card" id="responseCard">
+    <div class="response-label">Rewritten Version</div>
+    <div class="response-text" id="responseText"></div>
+  </div>
+
+</div>
+
+<script>
+const articles = [
+  {
+    title: "Teen from Craiova helps elderly man cross the street",
+    text: "A teenager from Craiova was spotted yesterday afternoon helping an elderly man safely cross a busy intersection in the city center. Witnesses say the man seemed uncertain and confused. After the young person guided him to the other side, the elderly man thanked him with a smile."
+  },
+  {
+    title: "Lost wallet returned to its owner in Brașov",
+    text: "A woman from Brașov found a wallet left on a bench in Sfatu Square yesterday afternoon. She immediately handed it to the police, and shortly after, the owner recovered his belongings. The man personally thanked her for her honesty."
+  },
+  {
+    title: "Two students from Cluj help a lost child in a mall",
+    text: "Last evening, at a shopping center in Cluj-Napoca, two students intervened after noticing a scared and disoriented child. After a brief search, the students managed to find the child's parents, who expressed their deep gratitude for the help."
+  },
+  {
+    title: "Cat rescued from a tree in Sibiu",
+    text: "A man from Sibiu intervened yesterday after noticing a cat stuck in a tree in front of his apartment building. The animal was visibly frightened and unable to come down on its own. After a few minutes, the cat was rescued and returned to its owner, who thanked the rescuer warmly."
+  },
+  {
+    title: "Neighbors help repair fence of elderly woman in Timișoara",
+    text: "Several residents of a neighborhood in Timișoara mobilized yesterday to repair the damaged fence of an elderly woman who lives alone. The neighbors bought materials and worked together to finish the repairs in a single day."
+  },
+  {
+    title: "Driver from Bucharest helps fallen cyclist",
+    text: "In Bucharest, a driver stopped yesterday to help a cyclist who had fallen in traffic. The driver called an ambulance and waited until the cyclist received medical care. Bystanders appreciated his promptness."
+  },
+  {
+    title: "Students from Iași plant flowers in central park",
+    text: "A group of students from Iași planted flowers in the city's central park yesterday, as part of a school volunteering project to improve public spaces. Local residents welcomed the young people's initiative."
+  },
+  {
+    title: "Young woman from Constanța donates books to rural school",
+    text: "A young woman from Constanța donated several new books to a rural school yesterday. The school director stated that the students would benefit greatly from these additional educational materials."
+  },
+  {
+    title: "Neighbor does grocery shopping for retired woman in Oradea",
+    text: "In Oradea, a woman helps a retired neighbor weekly by doing her grocery shopping and bringing her necessary medications. The pensioner stated that the gesture makes her life easier and gives her a genuine sense of security."
+  },
+  {
+    title: "Retired man from Arad returns family's lost dog",
+    text: "A retired man from Arad found a lost dog yesterday and returned it to its owners after seeing their announcement online. The family thanked him warmly and expressed relief that their animal was home again."
+  },
+  {
+    title: "Young people from Galați voluntarily clean Danube riverbank",
+    text: "A group of five student volunteers from Galați conducted a voluntary cleanup of the Danube riverbank yesterday. In about three hours, they collected several bags of trash, saying their gesture came from respect and care for the community and the environment."
+  },
+  {
+    title: "Woman gives her umbrella to a stranger in the rain in Timișoara",
+    text: "During heavy rain in Timișoara, a woman gave her own umbrella to a man waiting for the bus without any shelter. Witnesses say the man was surprised but accepted it gratefully. The woman simply said anyone would have done the same."
+  },
+  {
+    title: "Retired teacher from Alba Iulia offers free tutoring to neighborhood students",
+    text: "A retired teacher from Alba Iulia provides free weekly math and Romanian lessons to neighborhood students who cannot afford private tutoring. His initiative has been welcomed by parents and students alike, who say academic results have visibly improved."
+  },
+  {
+    title: "Taxi driver from Bucharest returns laptop forgotten by passenger",
+    text: "A taxi driver from Bucharest returned a valuable laptop that a client had forgotten in his vehicle yesterday. The driver personally searched for the owner, who was impressed and grateful for the honest and caring gesture."
+  },
+  {
+    title: "Students from Constanța voluntarily help renovate playground",
+    text: "Several students from Constanța voluntarily participated in renovating a local playground yesterday. They repainted and repaired damaged equipment, saying they wanted to contribute to the happiness of children in the area."
+  },
+  {
+    title: "Woman from Timișoara helps mother lift stroller onto tram",
+    text: "Yesterday, on a tram in Timișoara, a woman noticed a young mother struggling to lift a baby stroller. Without hesitation, she helped her board and find a seat. Those nearby appreciated the simple and natural gesture."
+  },
+  {
+    title: "Young people from Constanța collect clothes for local social center",
+    text: "A group of young people from Constanța organized a clothing drive for a local social center yesterday. Their initiative quickly gathered many donations, and the young people hope their gesture will inspire other community members to do the same."
+  },
+  {
+    title: "Student from Craiova offers free music lessons for children",
+    text: "In Craiova, a music conservatory student offers free weekly guitar and piano lessons to children from low-income families. His initiative has attracted several children who otherwise would not have been able to learn music."
+  },
+  {
+    title: "Supermarket employees in Galați give food to struggling family",
+    text: "Several employees of a supermarket in Galați gave food products to a local family in financial difficulty yesterday. The family stated that this gesture was a great help during the difficult period they are going through."
+  },
+  {
+    title: "Man from Iași repairs children's bikes for free",
+    text: "For several months, a man from Iași has been offering free bicycle repairs to children in his neighborhood. He says he wants to encourage children to spend time outdoors and be more physically active."
+  },
+  {
+    title: "Cashier from Brașov covers purchase difference for elderly customer",
+    text: "Yesterday, in a supermarket in Brașov, a cashier covered the difference for an elderly person's purchase who did not have enough money. The gesture was quietly applauded by nearby customers."
+  },
+  {
+    title: "Neighbors in Oradea help family rebuild home after storm",
+    text: "Residents of a street in Oradea mobilized to help a family whose roof and fence were destroyed by a storm. The neighbors contributed materials, money, and volunteer labor to restore the home."
+  },
+  {
+    title: "Student from Bucharest organizes recycling campaign at school",
+    text: "A high school student from Bucharest organized a voluntary action to collect recyclable waste at her school. Classmates and teachers actively participated, encouraging the environmentally responsible gesture."
+  },
+  {
+    title: "Couple from Arad periodically adopts abandoned animals",
+    text: "A couple from Arad provides temporary shelter for abandoned animals and helps them find new homes. The two say they will continue this out of love and care for animals."
+  },
+  {
+    title: "Veterinarian from Constanța offers free treatment to stray animals",
+    text: "A veterinarian from Constanța periodically offers free consultations for stray animals found on the streets. He says he does this out of love for animals and a desire to reduce their suffering."
+  },
+  {
+    title: "Postal worker from Bucharest checks on elderly people living alone",
+    text: "A postal worker in the capital checks weekly on elderly people living alone in his neighborhood, on his own initiative. The elderly residents say these visits make them feel much less isolated."
+  },
+  {
+    title: "Young man from Craiova repairs children's bikes for free",
+    text: "A young man from Craiova repairs children's bicycles in his neighborhood for free every weekend. The local community appreciates the gesture that supports children's physical activity."
+  },
+  {
+    title: "Student from Sibiu shares her lunch with classmate who forgot hers",
+    text: "A student from Sibiu shared her lunch with her classmate who had forgotten her food at home yesterday. The gesture was positively noted by both teachers and classmates."
+  },
+  {
+    title: "Retired woman from Bucharest knits clothes for underprivileged children",
+    text: "A retired woman from Bucharest knits clothes and hats for free every winter for children from underprivileged families. Her gesture has been appreciated by the community, which recently contributed additional materials to support her work."
+  },
+  {
+    title: "Man from Craiova repairs neighborhood children's bikes for free",
+    text: "A man from Craiova recently started repairing children's bicycles in his neighborhood for free, especially for those from low-income families. Parents said the initiative has created a genuine sense of community in the neighborhood."
+  },
+  {
+    title: "Employees of Brașov firm symbolically adopt park for maintenance",
+    text: "Employees of a company from Brașov have recently adopted a local park, which they clean voluntarily every month. Local authorities and residents appreciate the effort to maintain a clean and pleasant environment."
+  },
+  {
+    title: "Cashier from Iași covers the difference for a child's purchase",
+    text: "In a store in Iași, a cashier recently covered the difference for a child who did not have enough money. Witnesses say the simple gesture impressed them and reminded them of the generosity that exists in the community."
+  },
+  {
+    title: "Students from Timișoara distribute warm tea to homeless people",
+    text: "A group of students from Timișoara distributed warm tea and food to homeless people in the city center last night. The young people said they will continue this initiative during the cold months, wanting to show solidarity with those in need."
+  }
+];
+
+let currentIndex = 0;
+let isStreaming = false;
+let articleStats = articles.map(() => ({ likes: 0, shares: 0, shown: false }));
+
+function loadArticle(index) {
+  currentIndex = index;
+  const art = articles[index];
+  const stats = articleStats[index];
+
+  document.getElementById('articleMeta').textContent = `Article ${index + 1} / ${articles.length}`;
+  document.getElementById('articleTitle').textContent = art.title;
+  document.getElementById('articleBody').textContent = art.text;
+  document.getElementById('likesCount').textContent = stats.likes.toLocaleString();
+  document.getElementById('sharesCount').textContent = stats.shares.toLocaleString();
+
+  const socialRow = document.getElementById('socialRow');
+  stats.shown ? socialRow.classList.add('visible') : socialRow.classList.remove('visible');
+
+  document.getElementById('responseCard').classList.remove('visible');
+  document.getElementById('responseText').textContent = '';
+}
+
+function resetAll() {
+  articleStats = articles.map(() => ({ likes: 0, shares: 0, shown: false }));
+  ['openness','conscientiousness','extraversion','agreeableness','neuroticism'].forEach(id => {
+    document.getElementById(id).value = 3;
+    document.getElementById(id + 'Val').textContent = '3';
+  });
+  loadArticle(0);
+}
+
+function nextArticle() {
+  loadArticle((currentIndex + 1) % articles.length);
+}
+
+function showOriginal() {
+  document.getElementById('responseCard').classList.remove('visible');
+  document.getElementById('responseText').textContent = '';
+  document.getElementById('articleCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function rewriteArticle() {
+  if (isStreaming) return;
+  isStreaming = true;
+
+  const btn = document.getElementById('rewriteBtn');
+  btn.disabled = true;
+  btn.textContent = '⟳ Rewriting…';
+
+  const responseCard = document.getElementById('responseCard');
+  const responseText = document.getElementById('responseText');
+  responseCard.classList.add('visible');
+  responseText.textContent = '';
+
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  responseText.appendChild(cursor);
+
+  const art = articles[currentIndex];
+  const payload = {
+    text: art.title + '\n\n' + art.text,
+    openness: parseInt(document.getElementById('openness').value),
+    conscientiousness: parseInt(document.getElementById('conscientiousness').value),
+    extraversion: parseInt(document.getElementById('extraversion').value),
+    agreeableness: parseInt(document.getElementById('agreeableness').value),
+    neuroticism: parseInt(document.getElementById('neuroticism').value)
+  };
+
+  try {
+    const response = await fetch('/api/rewrite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      cursor.remove();
+      responseText.textContent = 'Error: ' + (await response.text());
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed === 'data: [DONE]') continue;
+        if (trimmed.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(trimmed.slice(6));
+            const content = data.choices?.[0]?.delta?.content;
+            if (content) {
+              responseText.insertBefore(document.createTextNode(content), cursor);
+            }
+          } catch (_) { /* partial chunk, skip */ }
+        }
+      }
+    }
+
+    cursor.remove();
+
+    // Accumulate random likes + shares
+    const stats = articleStats[currentIndex];
+    stats.likes  += Math.floor(Math.random() * 450) + 50;
+    stats.shares += Math.floor(Math.random() * 180) + 20;
+    stats.shown   = true;
+
+    document.getElementById('likesCount').textContent  = stats.likes.toLocaleString();
+    document.getElementById('sharesCount').textContent = stats.shares.toLocaleString();
+    document.getElementById('socialRow').classList.add('visible');
+
+  } catch (err) {
+    cursor.remove();
+    responseText.textContent = 'Error: ' + err.message;
+  } finally {
+    isStreaming = false;
+    btn.disabled = false;
+    btn.textContent = '✦ Rewrite';
+  }
+}
+
+// Boot
+loadArticle(0);
+</script>
+</body>
+</html>
