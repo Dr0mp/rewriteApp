@@ -17,9 +17,13 @@
 
     #plexus {
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       z-index: 0;
       pointer-events: none;
+      display: block;
     }
 
     .container {
@@ -757,10 +761,10 @@ openHelp();
       for (let j = i + 1; j < particles.length; j++) {
         const d = dist(particles[i], particles[j]);
         if (d < MAX_DIST) {
-          const alpha = (1 - d / MAX_DIST) * 0.18;
+          const alpha = (1 - d / MAX_DIST) * 0.35;
           ctx.beginPath();
           ctx.strokeStyle = `rgba(${DOT_COLOR},${alpha})`;
-          ctx.lineWidth = 0.8;
+          ctx.lineWidth = 1;
           ctx.moveTo(particles[i].x, particles[i].y);
           ctx.lineTo(particles[j].x, particles[j].y);
           ctx.stroke();
@@ -772,10 +776,10 @@ openHelp();
     for (const p of particles) {
       const d = dist(p, mouse);
       if (d < MOUSE_RADIUS) {
-        const alpha = (1 - d / MOUSE_RADIUS) * 0.45;
+        const alpha = (1 - d / MOUSE_RADIUS) * 0.7;
         ctx.beginPath();
         ctx.strokeStyle = `rgba(${DOT_COLOR},${alpha})`;
-        ctx.lineWidth = 0.9;
+        ctx.lineWidth = 1.2;
         ctx.moveTo(p.x, p.y);
         ctx.lineTo(mouse.x, mouse.y);
         ctx.stroke();
@@ -785,8 +789,8 @@ openHelp();
     // draw dots
     for (const p of particles) {
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${DOT_COLOR},0.35)`;
+      ctx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${DOT_COLOR},0.6)`;
       ctx.fill();
     }
 
